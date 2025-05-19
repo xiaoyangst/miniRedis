@@ -7,4 +7,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type" FORCE)
 endif()
 
-add_executable(${PROJECT_NAME} TcpServer.cpp)
+aux_source_directory(${CMAKE_SOURCE_DIR}/src/base BASE)
+
+add_executable(${PROJECT_NAME} TcpServer.cpp ${BASE})

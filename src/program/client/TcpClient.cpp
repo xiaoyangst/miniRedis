@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "MsgInterflow.h"
+
 constexpr int PORT = 8888;
 
 int main() {
@@ -19,7 +21,7 @@ int main() {
 	server_addr.sin_port = htons(PORT);
 	inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
 
-	if (connect(sock, (sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
+	if (connect(sock, (sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
 		std::cerr << "Connection failed\n";
 		return 1;
 	}
@@ -33,21 +35,36 @@ int main() {
 
 		if (command.empty()) continue;
 
-		// Exit command
 		if (command == "exit" || command == "quit") {
 			break;
 		}
 
-		// Add CRLF for Redis-style protocol (optional for now)
 		command += "\r\n";
 
-		// Send command to server
-		if (send(sock, command.c_str(), command.size(), 0) < 0) {
-			std::cerr << "Send failed\n";
+		if (!MsgInterflow::sendMsg(sock, command)) {
+			std::cerr<< "Send failed\n";
 			break;
 		}
 
-		// Receive response
+		/*
+		// pack msg
+		auto pack_msg = MsgProtocol::pack(command);
+
+		if (send(sock, pack_msg.c_str(), pack_msg.size(), 0) < 0) {
+			std::cerr << "Send failed\n";
+			break;
+		}
+		 */
+
+		std::string response;
+		if (!MsgInterflow::recvMsg(sock,response)){
+			std::cerr<<"Recv failed\n";
+			break;
+		}
+
+		std::cout << "Server: " << response;
+
+		/*
 		char buffer[1024] = {0};
 		int bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
 		if (bytes <= 0) {
@@ -56,7 +73,11 @@ int main() {
 		}
 
 		std::string response(buffer, bytes);
-		std::cout << "Server: " << response;
+
+		// unpack msg
+		auto unpack_msg = MsgProtocol::unpack(response);
+		std::cout << "Server: " << unpack_msg;
+		 */
 	}
 
 	close(sock);
