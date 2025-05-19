@@ -13,7 +13,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 
-
+#include "public.h"
 #include "MsgProtocol.h"
 #include "MsgInterflow.h"
 
@@ -22,7 +22,7 @@ bool MsgInterflow::sendAll(int sockfd, const std::string &data) {
 	while (total < data.size()) {
 		ssize_t sent = send(sockfd, data.data() + total, data.size() - total, MSG_NOSIGNAL);
 		if (sent <= 0) return false;
-		total += sent;
+		total += sent;	// 继续发送没有发送完的数据
 	}
 	return true;
 }
@@ -45,15 +45,15 @@ bool MsgInterflow::sendMsg(int sockfd, const std::string &message) {
 
 bool MsgInterflow::recvMsg(int sockfd, std::string &out_message) {
 	std::string header;
-	if (!recvN(sockfd, header, 8)) {	// 先接收 八字节
+	if (!recvN(sockfd, header, 8)) {	// 先接收头部指定字节
 		return false;
 	}
 
 	uint64_t len_net = 0;
 	std::memcpy(&len_net, header.data(), 8);
-	uint64_t len = be64toh(len_net);
+	uint64_t len = be64toh(len_net);	// 得到消息体长度
 
-	if (len > 1024 * 1024) {  // 限制消息大小
+	if (len > MAX_MSG_LEN) {  // 限制消息大小
 		std::cerr << "Message too large\n";
 		return false;
 	}

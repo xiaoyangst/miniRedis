@@ -17,7 +17,8 @@ class MsgInterflow {
  public:
   static bool sendMsg(int sockfd, const std::string& message);
   static bool recvMsg(int sockfd, std::string& out_message);
- private:
+
+  // 需要自行封包和拆包，只是用来测试，外部不必使用
   static bool sendAll(int sockfd, const std::string& data);
   static bool recvN(int sockfd, std::string& out, size_t n);
 };

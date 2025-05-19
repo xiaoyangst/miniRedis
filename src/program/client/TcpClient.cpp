@@ -42,42 +42,17 @@ int main() {
 		command += "\r\n";
 
 		if (!MsgInterflow::sendMsg(sock, command)) {
-			std::cerr<< "Send failed\n";
-			break;
-		}
-
-		/*
-		// pack msg
-		auto pack_msg = MsgProtocol::pack(command);
-
-		if (send(sock, pack_msg.c_str(), pack_msg.size(), 0) < 0) {
 			std::cerr << "Send failed\n";
 			break;
 		}
-		 */
 
 		std::string response;
-		if (!MsgInterflow::recvMsg(sock,response)){
-			std::cerr<<"Recv failed\n";
+		if (!MsgInterflow::recvMsg(sock, response)) {
+			std::cerr << "Recv failed\n";
 			break;
 		}
 
 		std::cout << "Server: " << response;
-
-		/*
-		char buffer[1024] = {0};
-		int bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
-		if (bytes <= 0) {
-			std::cerr << "Disconnected by server\n";
-			break;
-		}
-
-		std::string response(buffer, bytes);
-
-		// unpack msg
-		auto unpack_msg = MsgProtocol::unpack(response);
-		std::cout << "Server: " << unpack_msg;
-		 */
 	}
 
 	close(sock);

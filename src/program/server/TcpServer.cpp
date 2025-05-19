@@ -112,10 +112,12 @@ int main() {
 				}
 				std::cout << "Received: " << recv_msg << " from FD=" << fd << "\n";
 
+				/*
 				std::string reply = "+PONG\r\n";
 				if (!MsgInterflow::sendMsg(fd,reply)){
 					std::cerr<<"SendMsg failed\n";
 				}
+				*/
 
 				/*
 					// 处理客户端数据
