@@ -8,5 +8,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/src/base BASE)
+aux_source_directory(${CMAKE_SOURCE_DIR}/src/net NET)
 
-add_executable(${PROJECT_NAME} TcpServer.cpp ${BASE})
+add_executable(${PROJECT_NAME} TcpServer.cpp ${BASE} ${NET})

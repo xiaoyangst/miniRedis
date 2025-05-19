@@ -10,7 +10,8 @@
 
 #include "MsgInterflow.h"
 
-constexpr int PORT = 8888;
+constexpr std::string IP = "127.0.0.1";
+constexpr uint16_t PORT = 8888;
 constexpr int MAX_EVENTS = 1024;
 constexpr int BUFFER_SIZE = 4096;
 
@@ -107,17 +108,16 @@ int main() {
 			} else {
 
 				std::string recv_msg;
-				if (!MsgInterflow::recvMsg(fd,recv_msg)){
-					std::cerr<<"RecvMsg failed\n";
+				if (!MsgInterflow::recvMsg(fd, recv_msg)) {
+					std::cerr << "RecvMsg failed\n";
 				}
 				std::cout << "Received: " << recv_msg << " from FD=" << fd << "\n";
 
-				/*
 				std::string reply = "+PONG\r\n";
-				if (!MsgInterflow::sendMsg(fd,reply)){
-					std::cerr<<"SendMsg failed\n";
+				if (!MsgInterflow::sendMsg(fd, reply)) {
+					std::cerr << "SendMsg failed\n";
 				}
-				*/
+
 
 				/*
 					// 处理客户端数据

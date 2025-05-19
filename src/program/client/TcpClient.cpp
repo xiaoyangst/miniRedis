@@ -6,8 +6,10 @@
 #include <arpa/inet.h>
 
 #include "MsgInterflow.h"
+#include "Socket.h"
 
-constexpr int PORT = 8888;
+constexpr std::string IP = "127.0.0.1";
+constexpr uint16_t PORT = 8888;
 
 int main() {
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -16,15 +18,12 @@ int main() {
 		return 1;
 	}
 
-	sockaddr_in server_addr{};
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(PORT);
-	inet_pton(AF_INET, "127.0.0.1", &server_addr.sin_addr);
+	InetAddress serverAddr(IP, PORT);  // 127.0.0.1, 8888
+	Socket clientSock(sock);
+	clientSock.setReuseAddr(true);
+	// clientSock.setNonBlocking(true);	// 不要设置非阻塞，否则 connect 会直接返回，导致连接不上服务器
 
-	if (connect(sock, (sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-		std::cerr << "Connection failed\n";
-		return 1;
-	}
+	clientSock.connect(serverAddr);
 
 	std::cout << "Connected to server on port " << PORT << ". Type 'exit' to quit.\n";
 
