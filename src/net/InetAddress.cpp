@@ -8,8 +8,9 @@
   ******************************************************************************
   */
 
-#include <cstring>
+
 #include "InetAddress.h"
+#include <cstring>
 
 InetAddress::InetAddress(std::string ip, uint16_t port) {
 	std::memset(&addr_, 0, sizeof(addr_));

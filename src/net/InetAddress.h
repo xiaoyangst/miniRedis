@@ -19,6 +19,8 @@ class InetAddress {
  public:
   InetAddress(std::string ip, uint16_t port);
 
+  InetAddress() {}
+
   explicit InetAddress(const struct sockaddr_in &addr)
 	  : addr_(addr) {}
 

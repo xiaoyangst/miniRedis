@@ -8,12 +8,13 @@
   ******************************************************************************
   */
 
+#include "Socket.h"
 #include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-#include "Socket.h"
+
 
 Socket::Socket(int sockfd)
 	: sockfd_(sockfd) {}
