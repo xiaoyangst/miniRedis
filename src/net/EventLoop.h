@@ -12,14 +12,16 @@
 #define MINIREDIS_SRC_NET_EVENTLOOP_H_
 
 #include "Channel.h"
-#include "Epoller.h"
+
 #include <functional>
 #include <atomic>
 #include <mutex>
 #include <vector>
 
-class EventLoop : public std::enable_shared_from_this<EventLoop> {
-  using ChannelList = std::vector<std::shared_ptr<Channel>>;
+class Epoller;
+
+class EventLoop {
+  using ChannelList = std::vector<Channel *>;
  public:
   using Functor = std::function<void()>;
   void loop();
@@ -28,10 +30,10 @@ class EventLoop : public std::enable_shared_from_this<EventLoop> {
   EventLoop();
   ~EventLoop();
 
-  void updateChannel(std::shared_ptr<Channel> channel);
-  void removeChannel(std::shared_ptr<Channel> channel);
-  bool hasChannel(std::shared_ptr<Channel> channel);
-  void addCB(const Functor& cb);
+  void updateChannel(Channel *channel);
+  void removeChannel(Channel *channel);
+  bool hasChannel(Channel *channel);
+  void addCB(const Functor &cb);
  private:
   void doPendingFunctors();
  private:

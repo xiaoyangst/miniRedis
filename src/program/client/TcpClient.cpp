@@ -9,7 +9,7 @@
 #include "Socket.h"
 
 constexpr std::string IP = "127.0.0.1";
-constexpr uint16_t PORT = 8888;
+constexpr uint16_t PORT = 7777;
 
 int main() {
 	int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -18,7 +18,7 @@ int main() {
 		return 1;
 	}
 
-	InetAddress serverAddr(IP, PORT);  // 127.0.0.1, 8888
+	InetAddress serverAddr(IP, PORT);
 	Socket clientSock(sock);
 	clientSock.setReuseAddr(true);
 	// clientSock.setNonBlocking(true);	// 不要设置非阻塞，否则 connect 会直接返回，导致连接不上服务器
@@ -40,16 +40,28 @@ int main() {
 
 		command += "\r\n";
 
-		if (!MsgInterflow::sendMsg(sock, command)) {
+		if (::send(sock,command.data(), command.size(),0) < 0){
 			std::cerr << "Send failed\n";
 			break;
 		}
 
+//		if (!MsgInterflow::sendMsg(sock, command)) {
+//			std::cerr << "Send failed\n";
+//			break;
+//		}
+
 		std::string response;
-		if (!MsgInterflow::recvMsg(sock, response)) {
+		response.resize(1024);
+		if (::recv(sock,response.data(),response.size(),0) < 0){
 			std::cerr << "Recv failed\n";
 			break;
 		}
+
+//		std::string response;
+//		if (!MsgInterflow::recvMsg(sock, response)) {
+//			std::cerr << "Recv failed\n";
+//			break;
+//		}
 
 		std::cout << "Server: " << response;
 	}

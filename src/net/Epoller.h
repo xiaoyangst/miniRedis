@@ -16,30 +16,30 @@
 #include "Channel.h"
 #include "EventLoop.h"
 
-class Epoller{
+class Epoller {
   using EventList = std::vector<struct epoll_event>;
  public:
-  using ChannelList = std::vector<std::shared_ptr<Channel>>;
-  using ChannelMap = std::unordered_map<int, std::shared_ptr<Channel>>;
+  using ChannelList = std::vector<Channel *>;
+  using ChannelMap = std::unordered_map<int, Channel *>;
  public:
-  explicit Epoller(std::shared_ptr<EventLoop> loop);
+  explicit Epoller(EventLoop *loop);
   ~Epoller();
 
   void poll(int timeoutMs, ChannelList &activeChannels);    //TODO 后期加入定时器，poll 函数返回值得是有事件发生的时间
-  void updateChannel(std::shared_ptr<Channel> channel);
-  void removeChannel(std::shared_ptr<Channel> channel);
-  bool hasChannel(std::shared_ptr<Channel> channel) const;
+  void updateChannel(Channel *channel);
+  void removeChannel(Channel *channel);
+  bool hasChannel(Channel *channel) const;
  private:
 
   void fillActiveChannels(int numEvents,
 						  ChannelList &activeChannels) const;
-  void update(int operation, std::shared_ptr<Channel> channel);
+  void update(int operation, Channel *channel);
 
   std::string operationToString(int op);
  public:
   ChannelMap channels_;
  private:
-  std::shared_ptr<EventLoop> ownerLoop_;
+  EventLoop *ownerLoop_;
   int epollFd_;
   EventList events_;
 };

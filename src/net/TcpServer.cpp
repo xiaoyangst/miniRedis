@@ -12,11 +12,14 @@
 #include "TcpConnection.h"
 #include "Acceptor.h"
 #include "EventLoop.h"
+#include "Logger.h"
 #include "Utils.h"
+#include <iostream>
 
-TcpServer::TcpServer(std::shared_ptr<EventLoop> loop, const InetAddress &listenAddr)
-	: loop_(loop), acceptor_(std::make_unique<Acceptor>(loop_, listenAddr))
-	  , connectionCallback_(defaultConnectionCallback) {
+TcpServer::TcpServer(EventLoop *loop, const InetAddress &listenAddr)
+	: loop_(loop), acceptor_(new Acceptor(loop_, listenAddr))
+	  , messageCallback_(defaultMessageCallback)
+	  , connectionCallback_(defaultConnectionCallback), curConnId_(1) {
 	acceptor_->setNewConnectionCallback(
 		[this](int sockfd, const InetAddress &peerAddr) {
 		  this->newConnection(sockfd, peerAddr);
@@ -25,18 +28,23 @@ TcpServer::TcpServer(std::shared_ptr<EventLoop> loop, const InetAddress &listenA
 }
 
 void TcpServer::start() {
+	LOG_INFO("Server start");
 	acceptor_->listen();
 }
 
 void TcpServer::newConnection(int sockfd, const InetAddress &peerAddr) {
+
+	LOG_INFO("Have newConnection");
+
 	InetAddress localAddr(Utils::getLocalAddr(sockfd));
 
 	curConnId_++;
 
-	TcpConnectionPtr conn(new TcpConnection(loop_,
-											sockfd,
-											localAddr,
-											peerAddr));
+	TcpConnectionPtr conn = std::make_shared<TcpConnection>(loop_,
+															curConnId_,
+															sockfd,
+															localAddr,
+															peerAddr);
 	connections_[curConnId_] = conn;
 	conn->setConnectionCallback(connectionCallback_);
 	conn->setMessageCallback(messageCallback_);
@@ -60,4 +68,29 @@ void TcpServer::removeConnection(const TcpConnectionPtr &conn) {
 	});
 }
 
+void TcpServer::defaultConnectionCallback(const TcpConnectionPtr &conn) {
+	if (conn->connected()) {
+		std::cout << "[INFO] New connection from " << conn->peerAddress().toIpPort()
+				  << " (name: " << conn->id() << ")\n";
+	} else {
+		std::cout << "[INFO] Connection " << conn->id() << " is closed.\n";
+	}
+}
 
+void TcpServer::defaultMessageCallback(const TcpConnectionPtr &conn, Buffer *buffer) {
+	std::string msg = buffer->retrieveAllAsString();
+	std::cout << "[RECEIVED] From " << conn->id() << ": " << msg << std::endl;
+}
+
+TcpServer::~TcpServer() {
+	for (auto &item : connections_) {
+		TcpConnectionPtr conn(item.second);
+		item.second.reset();
+
+		// 销毁连接
+		conn->getLoop()->addCB(
+			std::bind(&TcpConnection::connectDestroyed, conn)
+		);
+	}
+	loop_->quit();
+}

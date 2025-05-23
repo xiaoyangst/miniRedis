@@ -23,12 +23,12 @@ class EventLoop;
 class TcpServer {
   using ConnectionMap = std::map<int, TcpConnectionPtr>;
  public:
-  TcpServer(std::shared_ptr<EventLoop> loop, const InetAddress &listenAddr);
+  TcpServer(EventLoop* loop, const InetAddress &listenAddr);
   ~TcpServer();
 
   void start();
 
-  std::shared_ptr<EventLoop> getLoop() const { return loop_; }
+  EventLoop* getLoop() const { return loop_; }
 
   void setConnectionCallback(const ConnectionCallback &cb) { connectionCallback_ = cb; }
 
@@ -39,8 +39,12 @@ class TcpServer {
  private:
   void newConnection(int sockfd, const InetAddress &peerAddr);
   void removeConnection(const TcpConnectionPtr &conn);
+
+  static void defaultConnectionCallback(const TcpConnectionPtr& conn);
+  static void defaultMessageCallback(const TcpConnectionPtr& conn,
+							  Buffer* buffer);
  private:
-  std::shared_ptr<EventLoop> loop_;
+  EventLoop *loop_;
   std::unique_ptr<Acceptor> acceptor_;
   ConnectionMap connections_;
   ConnectionCallback connectionCallback_;

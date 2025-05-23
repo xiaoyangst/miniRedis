@@ -20,7 +20,7 @@ class Acceptor {
  public:
   using NewConnectionCallback = std::function<void(int sockfd, const InetAddress &)>;
 
-  Acceptor(std::shared_ptr<EventLoop> loop, const InetAddress &listenAddr);
+  Acceptor(EventLoop* loop, const InetAddress &listenAddr);
   ~Acceptor();
 
   void setNewConnectionCallback(const NewConnectionCallback &cb) { newConnectionCallback_ = cb; }
@@ -32,7 +32,7 @@ class Acceptor {
  private:
   void handleRead();
 
-  std::shared_ptr<EventLoop> loop_;
+  EventLoop* loop_;
   Socket acceptSocket_;
   Channel acceptChannel_;
   NewConnectionCallback newConnectionCallback_;

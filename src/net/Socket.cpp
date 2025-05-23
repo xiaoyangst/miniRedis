@@ -14,7 +14,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-
+#include <cstring>
+#include "Logger.h"
 
 Socket::Socket(int sockfd)
 	: sockfd_(sockfd) {}
@@ -41,28 +42,30 @@ void Socket::setKeepAlive(bool on) {
 int Socket::accept(InetAddress *peeraddr) {
 	struct sockaddr_in addr;
 	socklen_t len = sizeof addr;
+	memset(&addr,0,len);
 	int connfd = ::accept(sockfd_, (struct sockaddr *)&addr, &len);
-	if (connfd >= 0 && peeraddr) {
-		*peeraddr = InetAddress(addr);
+	if (connfd >= 0) {
+		peeraddr ->setSockAddrInet(addr);
 	}
 	return connfd;
 }
 
 void Socket::bindAddress(const InetAddress &localaddr) {
 	if (bind(sockfd_, (struct sockaddr *)&localaddr.getSockAddrInet(), sizeof(struct sockaddr_in)) < 0) {
-		std::cerr << "Socket::bindAddress() failed\n";
+		LOG_FATAL("Socket::bindAddress() failed");
 	}
 }
 
 void Socket::listen() {
+	LOG_INFO("Server listen");
 	if (::listen(sockfd_, SOMAXCONN) < 0) {
-		std::cerr << "Socket::listen() failed\n";
+		LOG_FATAL("Socket::listen() failed");
 	}
 }
 
 void Socket::shutdownWrite() {
 	if (::shutdown(sockfd_, SHUT_WR) < 0) {
-		std::cerr << "Socket::shutdownWrite() failed\n";
+		LOG_FATAL("Socket::shutdownWrite() failed");
 	}
 }
 
@@ -70,7 +73,7 @@ void Socket::setReusePort(bool on) {
 #ifdef SO_REUSEPORT
 	int optval = on ? 1 : 0;
 	if (::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof optval) < 0) {
-		std::cerr << "Socket::setReusePort() failed\n";
+		LOG_FATAL("Socket::setReusePort() failed");
 	}
 #else
 	if (on) {
@@ -82,16 +85,16 @@ void Socket::setReusePort(bool on) {
 void Socket::setNonBlocking(bool on) {
 	int flags = fcntl(sockfd_, F_GETFL, 0);
 	if (flags == -1) {
-		std::cerr << "fcntl(F_GETFL) failed\n";
+		LOG_FATAL("fcntl(F_GETFL) failed");
 	}
 
 	if (on) {
 		if (fcntl(sockfd_, F_SETFL, flags | O_NONBLOCK) == -1) {
-			std::cerr << "fcntl(F_SETFL, O_NONBLOCK) failed\n";
+			LOG_FATAL("fcntl(F_SETFL, O_NONBLOCK) failed");
 		}
 	} else {
 		if (fcntl(sockfd_, F_SETFL, flags & ~O_NONBLOCK) == -1) {
-			std::cerr << "fcntl(F_SETFL, ~O_NONBLOCK) failed\n";
+			LOG_FATAL("fcntl(F_SETFL, ~O_NONBLOCK) failed");
 		}
 	}
 }
@@ -99,6 +102,6 @@ void Socket::setNonBlocking(bool on) {
 void Socket::connect(const InetAddress &serverAddr) {
 	const struct sockaddr_in &addr = serverAddr.getSockAddrInet();
 	if (::connect(sockfd_, (const struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		std::cerr << "Socket::connect() failed\n";
+		LOG_FATAL("Socket::connect() failed");
 	}
 }

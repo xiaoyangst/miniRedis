@@ -9,9 +9,11 @@
   */
 
 #include "EventLoop.h"
+#include "Epoller.h"
+#include "Logger.h"
 
 EventLoop::EventLoop()
-	: isLooping(true), epoller_(std::make_unique<Epoller>(shared_from_this())) {
+	: isLooping(true), epoller_(new Epoller(this)) {
 
 }
 
@@ -20,37 +22,40 @@ EventLoop::~EventLoop() {
 }
 
 void EventLoop::loop() {
+
+	LOG_INFO("EventLoop Start");
+
 	isLooping.store(true);
 
 	while (isLooping.load()) {
 		activeChannels_.clear();
 		epoller_->poll(kEpollTimeMs, activeChannels_);
-	}
 
-	for (const auto &channel : activeChannels_) {
-		channel->handleEvent();    // 执行触发事件的连接对应的回调
-	}
+		for (const auto &channel : activeChannels_) {
+			channel->handleEvent();    // 执行触发事件的连接对应的回调
+		}
 
-	doPendingFunctors();
+		//doPendingFunctors();
+	}
 }
 
 void EventLoop::quit() {
 	isLooping.store(false);
 }
 
-void EventLoop::updateChannel(std::shared_ptr<Channel> channel) {
+void EventLoop::updateChannel(Channel *channel) {
 	epoller_->updateChannel(channel);
 }
 
-void EventLoop::removeChannel(std::shared_ptr<Channel> channel) {
+void EventLoop::removeChannel(Channel *channel) {
 	epoller_->removeChannel(channel);
 }
 
-bool EventLoop::hasChannel(std::shared_ptr<Channel> channel) {
+bool EventLoop::hasChannel(Channel *channel) {
 	return epoller_->hasChannel(channel);
 }
 
-void EventLoop::doPendingFunctors() {	// 主从需要
+void EventLoop::doPendingFunctors() {    // 主从需要
 	std::vector<Functor> functors;
 	callingPendingFunctors_.store(true);
 
@@ -69,5 +74,6 @@ void EventLoop::addCB(const EventLoop::Functor &cb) {
 	cb();
 	//pendingFunctors_.push_back(cb);
 }
+
 
 

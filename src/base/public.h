@@ -25,6 +25,9 @@ constexpr int MAX_MSG_LEN = 1024 * 1024;
 constexpr int kInitEventListSize = 16;
 constexpr int kEpollTimeMs = 10000;
 
+constexpr size_t kCheapPrepend = 8;
+constexpr size_t kInitialSize = 1024;
+
 constexpr int kNew = -1;
 constexpr int kAdded = 1;
 constexpr int kDeleted = 2;
@@ -37,9 +40,7 @@ using WriteCompleteCallback = std::function<void(const TcpConnectionPtr &)>;
 using HighWaterMarkCallback = std::function<void(const TcpConnectionPtr &, size_t)>;
 using MessageCallback = std::function<void(const TcpConnectionPtr &,Buffer *)>;
 
-void defaultConnectionCallback(const TcpConnectionPtr& conn);
-void defaultMessageCallback(const TcpConnectionPtr& conn,
-							Buffer* buffer);
+
 
 using EventCallback = std::function<void()>;
 using ReadEventCallback = std::function<void()>;

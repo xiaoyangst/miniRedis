@@ -13,19 +13,19 @@
 
 #include "public.h"
 class EventLoop;
-class Channel {
+class Channel{
  public:
-  Channel(std::shared_ptr<EventLoop> loop,int fd);
+  Channel(EventLoop* loop,int fd);
 
   void handleEvent();
 
   void setRevents(int revents) { revents_ = revents; }
 
-  int fd() { return fd_; }
+  int fd() const { return fd_; }
 
   int events() const { return events_; }
 
-  int connStatus() { return connStatus_; }
+  int connStatus() const { return connStatus_; }
 
   void set_connStatus(int status) { connStatus_ = status; }
 
@@ -68,15 +68,14 @@ class Channel {
 
   bool isReading() const { return events_ & kReadEvent; }
 
-  std::shared_ptr<EventLoop> ownerLoop() { return loop_; }
+  EventLoop* ownerLoop() { return loop_; }
 
   void  remove();
 
  private:
   void update();
-  void handleEventWithGuard();
  private:
-  std::shared_ptr<EventLoop> loop_;
+  EventLoop* loop_;
   int fd_;
   int revents_;
   int events_;

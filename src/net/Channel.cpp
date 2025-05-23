@@ -8,45 +8,46 @@
   ******************************************************************************
   */
 
-#include <bits/poll.h>
 #include <iostream>
 #include "Channel.h"
 #include "EventLoop.h"
 
-Channel::Channel(std::shared_ptr<EventLoop> loop, int fd)
-	: loop_(loop), fd_(fd), events_(0), revents_(0), connStatus_(-1) {
+#include <sys/epoll.h>
+
+const int Channel::kNoneEvent = 0;
+const int Channel::kReadEvent = EPOLLIN | EPOLLPRI;
+const int Channel::kWriteEvent = EPOLLOUT;
+
+
+Channel::Channel(EventLoop* loop, int fd)
+	: loop_(loop), fd_(fd), events_(0), revents_(0), connStatus_(kNew) {
 
 }
 
 void Channel::handleEvent() {
-	handleEventWithGuard();
-}
-
-void Channel::handleEventWithGuard() {
-	if ((revents_ & POLLHUP) && !(revents_ & POLLIN)) {
+	if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {
 		if (closeCallback_) closeCallback_();
 	}
 
-	if (revents_ & POLLNVAL) {
-		std::cerr << "fd = " << fd_ << " Channel::handle_event() POLLNVAL\n";
-	}
-
-	if (revents_ & (POLLERR | POLLNVAL)) {
+	if (revents_ & EPOLLERR) {
 		if (errorCallback_) errorCallback_();
 	}
-	if (revents_ & (POLLIN | POLLPRI)) {
+
+	if (revents_ & (EPOLLIN | EPOLLPRI)) {
 		if (readCallback_) readCallback_();
 	}
-	if (revents_ & POLLOUT) {
+
+	if (revents_ & EPOLLOUT) {
 		if (writeCallback_) writeCallback_();
 	}
 }
 
+
 void Channel::update() {
-	loop_->removeChannel(this);
+	loop_->updateChannel(this);
 }
 
 void Channel::remove() {
-	loop_->updateChannel(this);
+	loop_->removeChannel(this);
 }
 
