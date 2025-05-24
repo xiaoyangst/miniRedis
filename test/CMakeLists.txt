@@ -8,7 +8,10 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/src/base BASE)
+aux_source_directory(${CMAKE_SOURCE_DIR}/src/datastruct DATASTRUCT)
 
 
 add_executable(StickyPackageTest StickyPackageTest.cpp ${BASE})
 target_link_libraries(StickyPackageTest pthread)
+
+add_executable(AVLTreeTest AVLTreeTest.cpp ${BASE} ${DATASTRUCT})
