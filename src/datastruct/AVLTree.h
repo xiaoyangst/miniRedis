@@ -45,7 +45,7 @@ class AVLTree {
 	  root_ = remove(root_, Key);
   }
 
-  Result search(const K &Key) {
+  Result search(const K &Key) const {
 	  return search(root_, Key);
   }
 
@@ -72,7 +72,7 @@ class AVLTree {
 	  }
   }
 
-  Result search(TreeNode *cur, const K &key) {
+  Result search(TreeNode *cur, const K &key) const {
 	  while (cur) {
 		  if (key < cur->key) {
 			  cur = cur->left;
@@ -144,7 +144,7 @@ class AVLTree {
 	  return cur;
   }
 
-  TreeNode *insert(TreeNode *root, K key, V val) {
+  TreeNode *insert(TreeNode *root, const K &key, const V &val) {
 	  if (root == nullptr) {
 		  size_++;
 		  return new TreeNode(key, val);
@@ -183,7 +183,7 @@ class AVLTree {
 	  }
 
 	  // 回溯平衡节点
-	  return backBalance(root, nullptr, key, path);
+	  return backBalance(root, key, path);
   }
 
   TreeNode *remove(TreeNode *root, K key) {
@@ -192,68 +192,71 @@ class AVLTree {
 	  std::stack<TreeNode *> path;
 	  TreeNode *parent = nullptr;
 
-	  // 找到要删除的节点
-	  auto cur = exist(root, key, path);
-	  if (cur == nullptr) return root;    // 表明 节点 就不存在
+	  // 找到目标节点和其父节点
+	  auto cur = exist(root, key, path, parent);
+	  if (!cur) return root;
 
-	  // 删除节点
 	  auto remove_node = cur;
-	  if (cur->left && cur->right) {    // 优先处理存在左右节点的，降级处理
-		  // 找中序后继节点，记录路径
-		  auto successor = cur->right;
-		  auto successor_parent = cur;
-		  path.push(cur);
+
+	  if (cur->left && cur->right) {
+		  // 找中序后继
+		  TreeNode *successor = cur->right;
+		  TreeNode *successor_parent = cur;
 
 		  while (successor->left) {
 			  successor_parent = successor;
-			  path.push(successor);
+			  path.push(successor);		// 走的节点要加入到路径中
 			  successor = successor->left;
 		  }
 
-		  // 替换
+		  // 替换当前节点内容
 		  cur->key = successor->key;
 		  cur->val = successor->val;
 
-		  // 删除
+		  // 准备删除 successor
 		  remove_node = successor;
 		  parent = successor_parent;
-		  cur = successor;
-	  } else {
-		  parent = path.empty() ? nullptr : path.top();
 	  }
 
-	  auto children = remove_node->left ? remove_node->left : remove_node->right;
-	  if (!parent) {
+	  // 已经从两个节点降级为处理单个节点
+	  // 为什么优先考虑它的左节点？
+	  TreeNode *child = remove_node->left ? remove_node->left : remove_node->right;
+
+	  if (parent == nullptr) { // 删除的是根节点，没有父节点的节点就是根节点
 		  delete remove_node;
-		  return children;
+		  size_--;
+		  return child;
 	  } else {
 		  if (parent->left == remove_node) {
-			  parent->left = children;
+			  parent->left = child;
 		  } else {
-			  parent->right = children;
+			  parent->right = child;
 		  }
 		  delete remove_node;
+		  size_--;
 	  }
 
-	  size_--;
-
-	  // 回溯来平衡节点
-	  return backBalance(root, children, key, path);
+	  // 回溯平衡路径
+	  return backBalance(root, key, path);
   }
 
-  TreeNode *exist(TreeNode *target, K key, std::stack<TreeNode *> &path) {
-	  while (target) {
-		  path.push(target);
-		  if (key < target->key) {
-			  target = target->left;
-		  } else if (key > target->key) {
-			  target = target->right;
-		  } else if (key == target->key) {    // 已找到，退出循环
-			  break;
+  // 由于要实际修改 parent，选择传递引用
+  // 二级指针也可以，但是操作其他不美观且容易犯错
+  TreeNode *exist(TreeNode *node, const K &key, std::stack<TreeNode *> &path, TreeNode *&parent) {
+	  parent = nullptr;
+	  while (node) {
+		  path.push(node);
+		  if (key < node->key) {
+			  parent = node;
+			  node = node->left;
+		  } else if (key > node->key) {
+			  parent = node;
+			  node = node->right;
+		  } else {
+			  return node;
 		  }
 	  }
-
-	  return target;
+	  return nullptr;
   }
 
   TreeNode *minnum(TreeNode *node) {
@@ -263,28 +266,26 @@ class AVLTree {
 	  return node;
   }
 
-  TreeNode *backBalance(TreeNode *root, TreeNode *children, K key, std::stack<TreeNode *> &path) {
+  TreeNode *backBalance(TreeNode *root, K key, std::stack<TreeNode *> &path) {
 	  while (!path.empty()) {
-		  auto node = path.top();
+		  auto cur = path.top();
 		  path.pop();
 
-		  node = balance(node);
-		  updateHeight(node);    // 虽然 balance 里做了，保险再做一次也行
+		  // 平衡当前节点，会导致当前节点的位置和其他节点的位置发生变化
+		  // 平衡的任务完成之后，还有一件事情要去处理，那就是 最新的 cur 究竟应该作为其父节点的左孩子，还是右孩子
+		  // 如果没有父亲节点，那就不用考虑前面的问题
+		  cur = balance(cur);
 
-		  if (!path.empty()) {    // 如果不是根节点，就要调整，因为旋转导致节点变化，值也发生变化
+		  if (!path.empty()) {    // 如果不是根节点，就要调整，因为旋转导致节点位置变化，对应地值也发生变化
 			  auto parent = path.top();
-
-			  if (parent->left == children
-				  || (!children && key < parent->key)) {
-				  parent->left = node;
+			  if (key < parent->key) {
+				  parent->left = cur;
 			  } else {
-				  parent->right = node;
+				  parent->right = cur;
 			  }
 		  } else {
-			  root = node;
+			  root = cur;
 		  }
-
-		  children = node;
 	  }
 	  return root;
   }
