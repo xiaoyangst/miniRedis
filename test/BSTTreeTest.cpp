@@ -1,10 +1,10 @@
 #include <iostream>
-#include "AVLTree.h"
+#include "BSTTree.h"
 
-// 假设你的 AVLTree 已经定义好了，包含一个打印函数
+// 假设你的 BSTTree 已经定义好了，包含一个打印函数
 
-void testAVLTree() {
-	AVLTree<int, std::string> tree;
+void testBSTTree() {
+	BSTTree<int, std::string> tree{};
 
 	std::cout << "插入节点:\n";
 	tree.insert(10, "ten");
@@ -52,7 +52,7 @@ void testAVLTree() {
 
 int main() {
 
-	testAVLTree();
+	testBSTTree();
 
 	return 0;
 }

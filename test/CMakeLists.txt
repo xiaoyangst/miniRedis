@@ -15,3 +15,4 @@ add_executable(StickyPackageTest StickyPackageTest.cpp ${BASE})
 target_link_libraries(StickyPackageTest pthread)
 
 add_executable(AVLTreeTest AVLTreeTest.cpp ${BASE} ${DATASTRUCT})
+add_executable(BSTTreeTest BSTTreeTest.cpp ${BASE} ${DATASTRUCT})

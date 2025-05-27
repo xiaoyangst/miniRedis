@@ -2,7 +2,7 @@
   ******************************************************************************
   * @file           : AVL.h
   * @author         : xy
-  * @brief          : None
+  * @brief          : 非递归模板实现 AVL 树（非线程安全）
   * @attention      : None
   * @date           : 2025/5/23
   ******************************************************************************
@@ -42,7 +42,9 @@ class AVLTree {
   }
 
   void remove(const K &Key) {
+	  if (root_){
 	  root_ = remove(root_, Key);
+	  }
   }
 
   Result search(const K &Key) const {
@@ -187,8 +189,6 @@ class AVLTree {
   }
 
   TreeNode *remove(TreeNode *root, K key) {
-	  if (!root) return nullptr;
-
 	  std::stack<TreeNode *> path;
 	  TreeNode *parent = nullptr;
 
@@ -205,7 +205,7 @@ class AVLTree {
 
 		  while (successor->left) {
 			  successor_parent = successor;
-			  path.push(successor);		// 走的节点要加入到路径中
+			  path.push(successor);        // 走的节点要加入到路径中
 			  successor = successor->left;
 		  }
 
@@ -219,7 +219,8 @@ class AVLTree {
 	  }
 
 	  // 已经从两个节点降级为处理单个节点
-	  // 为什么优先考虑它的左节点？
+
+	  // 记录待删除节点的孩子节点（这个很关键）
 	  TreeNode *child = remove_node->left ? remove_node->left : remove_node->right;
 
 	  if (parent == nullptr) { // 删除的是根节点，没有父节点的节点就是根节点
